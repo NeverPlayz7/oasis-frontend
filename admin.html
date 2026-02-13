@@ -4,10 +4,10 @@
     <title>Oasis Admin</title>
     <style>
         body { font-family: sans-serif; padding: 40px; text-align: center; background: #f0f2f5; }
-        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { width: 95%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #msg { margin-top: 10px; font-weight: bold; }
+        .box { background: white; padding: 25px; border-radius: 12px; max-width: 400px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #msg { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,17 +22,18 @@
 
     <script>
         async function addProduct() {
+            const msg = document.getElementById('msg');
             const product = {
                 name: document.getElementById('name').value,
                 price: document.getElementById('price').value,
                 image: document.getElementById('image').value
             };
 
-            const msg = document.getElementById('msg');
-            msg.innerText = "Sending...";
+            msg.innerText = "Processing...";
+            msg.style.color = "orange";
 
             try {
-                // DHAYAN SE: Ye naya address hai jo image_a2793b.png mein dikh raha hai
+                // Naya Backend URL
                 const res = await fetch('https://oasis-backend-production-a7eb.up.railway.app/products', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -40,16 +41,17 @@
                 });
 
                 if(res.ok) {
-                    msg.style.color = "green";
                     msg.innerText = "✅ Mubarak! Product add ho gaya.";
+                    msg.style.color = "green";
                     document.querySelectorAll('input').forEach(i => i.value = '');
                 } else {
+                    const errorText = await res.text();
+                    msg.innerText = "❌ Backend Error: Check MongoDB Variable";
                     msg.style.color = "red";
-                    msg.innerText = "❌ Error! Backend respond nahi kar raha.";
                 }
             } catch (err) {
+                msg.innerText = "❌ Connection Failed! Check Railway Logs.";
                 msg.style.color = "red";
-                msg.innerText = "❌ Connection Failed! Railway Variables check karein.";
             }
         }
     </script>
