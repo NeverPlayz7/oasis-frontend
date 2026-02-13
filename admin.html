@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Oasis Admin</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; background: #f0f2f5; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 95%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Add New Product</h2>
+        <input type="text" id="name" placeholder="Product Name">
+        <input type="number" id="price" placeholder="Price (PKR)">
+        <input type="text" id="image" placeholder="Image Link (https://...)">
+        <button onclick="addProduct()">Add Product to Oasis</button>
+        <p id="msg"></p>
+    </div>
+    <script>
+        async function addProduct() {
+            const product = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                image: document.getElementById('image').value
+            };
+            const res = await fetch('https://oasis-backend-production.up.railway.app/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(product)
+            });
+            if(res.ok) {
+                document.getElementById('msg').innerText = "✅ Mubarak! Product add ho gaya.";
+                document.querySelectorAll('input').forEach(i => i.value = '');
+            } else {
+                document.getElementById('msg').innerText = "❌ Error! Backend check karein.";
+            }
+        }
+    </script>
+</body>
+</html>
