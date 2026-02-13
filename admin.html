@@ -1,41 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oasis Admin - Add Product</title>
+    <title>Oasis Admin</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; text-align: center; background: #f0f2f5; }
-        .box { background: white; padding: 30px; border-radius: 12px; max-width: 450px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { color: #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button { width: 100%; padding: 14px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #218838; }
-        #msg { margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 5px; }
-        .success { color: #155724; background: #d4edda; }
-        .error { color: #721c24; background: #f8d7da; }
+        body { font-family: sans-serif; padding: 40px; text-align: center; background: #f0f2f5; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 95%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #msg { margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <div class="box">
-        <h2>📦 Add New Product</h2>
-        <input type="text" id="name" placeholder="Product Name (e.g. Shoes)">
+        <h2>Add New Product</h2>
+        <input type="text" id="name" placeholder="Product Name">
         <input type="number" id="price" placeholder="Price (PKR)">
-        <input type="text" id="image" placeholder="Direct Image Link (.jpg or .png)">
-        
+        <input type="text" id="image" placeholder="Image Link (https://...)">
         <button onclick="addProduct()">Add Product to Oasis</button>
-        
-        <div id="msg"></div>
+        <p id="msg"></p>
     </div>
 
     <script>
         async function addProduct() {
-            const msgDiv = document.getElementById('msg');
-            const name = document.getElementById('name').value;
-            const price = document.getElementById('price').value;
-            const image = document.getElementById('image').value;
+            const product = {
+                name: document.getElementById('name').value,
+                price: document.getElementById('price').value,
+                image: document.getElementById('image').value
+            };
 
-            // Basic validation
-            if(!name || !price || !image) {
-                msgDiv.innerText = "⚠️
+            const msg = document.getElementById('msg');
+            msg.innerText = "Sending...";
+
+            try {
+                // DHAYAN SE: Ye naya address hai jo image_a2793b.png mein dikh raha hai
+                const res = await fetch('https://oasis-backend-production-a7eb.up.railway.app/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
+                });
+
+                if(res.ok) {
+                    msg.style.color = "green";
+                    msg.innerText = "✅ Mubarak! Product add ho gaya.";
+                    document.querySelectorAll('input').forEach(i => i.value = '');
+                } else {
+                    msg.style.color = "red";
+                    msg.innerText = "❌ Error! Backend respond nahi kar raha.";
+                }
+            } catch (err) {
+                msg.style.color = "red";
+                msg.innerText = "❌ Connection Failed! Railway Variables check karein.";
+            }
+        }
+    </script>
+</body>
+</html>
