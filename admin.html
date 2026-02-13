@@ -1,59 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Oasis Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oasis Admin - GitHub Database</title>
     <style>
-        body { font-family: sans-serif; padding: 40px; text-align: center; background: #f0f2f5; }
-        .box { background: white; padding: 25px; border-radius: 12px; max-width: 400px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        #msg { margin-top: 15px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; padding: 50px; background: #f4f4f4; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #218838; }
+        #status { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Add New Product</h2>
-        <input type="text" id="name" placeholder="Product Name">
-        <input type="number" id="price" placeholder="Price (PKR)">
-        <input type="text" id="image" placeholder="Image Link (https://...)">
-        <button onclick="addProduct()">Add Product to Oasis</button>
-        <p id="msg"></p>
-    </div>
 
-    <script>
-        async function addProduct() {
-            const msg = document.getElementById('msg');
-            const product = {
-                name: document.getElementById('name').value,
-                price: document.getElementById('price').value,
-                image: document.getElementById('image').value
-            };
+<div class="card">
+    <h2>Add New Product</h2>
+    <input type="text" id="name" placeholder="Product Name (e.g. Shoes)">
+    <input type="number" id="price" placeholder="Price (e.g. 5000)">
+    <input type="text" id="image" placeholder="Image Link (https://...)">
+    <button onclick="addProduct()">Add Product to Oasis</button>
+    <div id="status"></div>
+</div>
 
-            msg.innerText = "Processing...";
-            msg.style.color = "orange";
+<script>
+    // ⚠️ IN DO CHEEZON KO APNE TOKEN AUR REPO SE BADLEIN
+    const GITHUB_TOKEN = "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"; 
+    const REPO_NAME = "NeverPlayz7/oasis-frontend"; 
+    const FILE_PATH = "data.json";
 
-            try {
-                // Naya Backend URL
-                const res = await fetch('https://oasis-backend-production-a7eb.up.railway.app/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(product)
-                });
+    async function addProduct() {
+        const name = document.getElementById('name').value;
+        const price = document.getElementById('price').value;
+        const image = document.getElementById('image').value;
+        const status = document.getElementById('status');
 
-                if(res.ok) {
-                    msg.innerText = "✅ Mubarak! Product add ho gaya.";
-                    msg.style.color = "green";
-                    document.querySelectorAll('input').forEach(i => i.value = '');
-                } else {
-                    const errorText = await res.text();
-                    msg.innerText = "❌ Backend Error: Check MongoDB Variable";
-                    msg.style.color = "red";
-                }
-            } catch (err) {
-                msg.innerText = "❌ Connection Failed! Check Railway Logs.";
-                msg.style.color = "red";
-            }
+        if (!name || !price || !image) {
+            status.innerHTML = "❌ Please fill all fields";
+            return;
         }
-    </script>
+
+        status.innerHTML = "⏳ Connecting to GitHub...";
+
+        try {
+            // 1. Pehle purana data aur SHA mangwaein
+            const getRes = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/${FILE_PATH}`, {
+                headers: { "Authorization": `token ${GITHUB_TOKEN}` }
+            });
+            const fileData = await getRes.json();
+            const sha = fileData.sha;
+            
+            // Purani file ka content decode karein (Base64 to String)
+            let currentContent = [];
+            if (fileData.content) {
+                currentContent = JSON.parse(atob(fileData.content));
+            }
+
+            // 2. Naya product add karein
+            const newProduct = { name, price: parseInt(price), image };
+            currentContent.push(newProduct);
+
+            // 3. GitHub par update bhejein
+            const updateRes = await fetch(`https://api.github.com/repos/${REPO_NAME}/contents/${FILE_PATH}`, {
+                method: "PUT",
+                headers: { 
+                    "Authorization": `token ${GITHUB_TOKEN}`,
+                    "Content-Type": "application/json" 
+                },
+                body: JSON.stringify({
+                    message: `Added product: ${name}`,
+                    content: btoa(JSON.stringify(currentContent, null, 2)), // String to Base64
+                    sha: sha
+                })
+            });
+
+            if (updateRes.ok) {
+                status.style.color = "green";
+                status.innerHTML = "✅ Mubarak! Product Added to GitHub.";
+                document.getElementById('name').value = '';
+                document.getElementById('price').value = '';
+                document.getElementById('image').value = '';
+            } else {
+                const errorData = await updateRes.json();
+                status.style.color = "red";
+                status.innerHTML = "❌ GitHub Error: " + errorData.message;
+            }
+
+        } catch (err) {
+            status.style.color = "red";
+            status.innerHTML = "❌ Connection Failed: " + err.message;
+        }
+    }
+</script>
+
 </body>
 </html>
